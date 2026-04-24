@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reserva das Aroeiras</title>
+
+<style>
+body {
+  margin: 0;
+  background: black;
+  overflow: hidden;
+  font-family: Arial;
+}
+
+/* vídeo */
+video {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* moldura */
+.frame {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: url('./MOLDURA.png') center/contain no-repeat;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* botão principal */
+.capture-btn {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 4px solid white;
+  background: rgba(255,255,255,0.2);
+  z-index: 20;
+}
+
+/* countdown */
+.countdown {
+  position: fixed;
+  top: 40%;
+  width: 100%;
+  text-align: center;
+  font-size: 80px;
+  color: white;
+  z-index: 30;
+  display: none;
+}
+
+/* flash */
+.flash {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: white;
+  opacity: 0;
+  z-index: 25;
+}
+
+/* preview */
+.preview {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: black;
+  display: none;
+  z-index: 40;
+}
+
+.preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.preview-buttons {
+  position: fixed;
+  bottom: 40px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.preview-buttons button {
+  padding: 15px 25px;
+  border-radius: 30px;
+  border: none;
+  font-size: 16px;
+}
+</style>
+</head>
+
+<body>
+
+<video id="video" autoplay playsinline></video>
+<div class="frame"></div>
+
+<div class="countdown" id="countdown"></div>
+<div class="flash" id="flash"></div>
+
+<button class="capture-btn" onclick="iniciarContagem()"></button>
+
+<div class="preview" id="preview">
+  <img id="previewImg">
+  <div class="preview-buttons">
+    <button onclick="salvar()">Salvar</button>
+    <button onclick="refazer()">Refazer</button>
+  </div>
+</div>
+
+<audio id="clickSound" src="https://www.soundjay.com/camera/camera-shutter.mp3"></audio>
+
+<script>
+const video = document.getElementById('video');
+const countdown = document.getElementById('countdown');
+const flash = document.getElementById('flash');
+const preview = document.getElementById('preview');
+const previewImg = document.getElementById('previewImg');
+
+let fotoFinal = "";
+
+// câmera com máxima qualidade possível
+navigator.mediaDevices.getUserMedia({
+  video: {
+    facingMode: "environment",
+    width: { ideal: 4096 },
+    height: { ideal: 2160 }
+  }
+})
+.then(stream => video.srcObject = stream)
+.catch(() => alert("Permita acesso à câmera"));
+
+function iniciarContagem() {
+  let tempo = 3;
+  countdown.style.display = "block";
+
+  const intervalo = setInterval(() => {
+    countdown.innerText = tempo;
+    tempo--;
+
+    if (tempo < 0) {
+      clearInterval(intervalo);
+      countdown.style.display = "none";
+      tirarFoto();
+    }
+  }, 1000);
+}
+
+function tirarFoto() {
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  const ctx = canvas.getContext('2d');
+
+  // flash
+  flash.style.opacity = 1;
+  setTimeout(() => flash.style.opacity = 0, 150);
+
+  // som
+  document.getElementById('clickSound').play();
+
+  ctx.drawImage(video, 0, 0);
+
+  const moldura = new Image();
+  moldura.src = 'MOLDURA.png';
+
+  moldura.onload = () => {
+    ctx.drawImage(moldura, 0, 0, canvas.width, canvas.height);
+
+    fotoFinal = canvas.toDataURL("image/png"); // máxima qualidade
+
+    previewImg.src = fotoFinal;
+    preview.style.display = "block";
+  };
+}
+
+function salvar() {
+  const link = document.createElement('a');
+  link.download = "reserva-aroeiras.png";
+  link.href = fotoFinal;
+  link.click();
+}
+
+function refazer() {
+  preview.style.display = "none";
+}
+</script>
+
+</body>
+</html>
