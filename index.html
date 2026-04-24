@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Reserva das Aroeiras</title>
+
+<style>
+body {
+  margin: 0;
+  background: black;
+  overflow: hidden;
+}
+
+/* câmera */
+video {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* moldura */
+.frame {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: url('MOLDURA.png') center/contain no-repeat;
+}
+
+/* botão */
+.capture-btn {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: white;
+  border: 5px solid #ccc;
+}
+
+/* contador */
+#countdown {
+  position: fixed;
+  top: 40%;
+  width: 100%;
+  text-align: center;
+  font-size: 80px;
+  color: white;
+  display: none;
+}
+
+/* preview */
+#preview {
+  display: none;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: black;
+}
+
+#preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* flash */
+#flash {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: white;
+  opacity: 0;
+  transition: 0.2s;
+}
+</style>
+</head>
+
+<body>
+
+<video id="video" autoplay playsinline></video>
+
+<div class="frame"></div>
+
+<button class="capture-btn" id="btnFoto"></button>
+
+<div id="countdown"></div>
+
+<div id="preview">
+  <img id="previewImg">
+</div>
+
+<div id="flash"></div>
+
+<!-- 🔥 SCRIPT CORRETO AQUI -->
+<script>
+const video = document.getElementById('video');
+const btn = document.getElementById('btnFoto');
+const countdown = document.getElementById('countdown');
+const preview = document.getElementById('preview');
+const previewImg = document.getElementById('previewImg');
+const flash = document.getElementById('flash');
+
+let fotoFinal = "";
+
+/* CÂMERA */
+navigator.mediaDevices.getUserMedia({
+  video: { facingMode: "environment" }
+})
+.then(stream => video.srcObject = stream)
+.catch(err => alert("Erro câmera: " + err.message));
+
+/* BOTÃO */
+btn.addEventListener("click", () => iniciarContagem());
+
+function iniciarContagem() {
+  let tempo = 3;
+  countdown.style.display = "block";
+  countdown.innerText = tempo;
+
+  const intervalo = setInterval(() => {
+    tempo--;
+    countdown.innerText = tempo;
+
+    if (tempo <= 0) {
+      clearInterval(intervalo);
+      countdown.style.display = "none";
+      tirarFoto();
+    }
+  }, 1000);
+}
+
+function tirarFoto() {
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  const ctx = canvas.getContext('2d');
+
+  flash.style.opacity = 1;
+  setTimeout(() => flash.style.opacity = 0, 150);
+
+  ctx.drawImage(video, 0, 0);
+
+  const moldura = new Image();
+  moldura.src = 'MOLDURA.png';
+
+  moldura.onload = () => {
+    ctx.drawImage(moldura, 0, 0, canvas.width, canvas.height);
+
+    fotoFinal = canvas.toDataURL("image/png");
+
+    previewImg.src = fotoFinal;
+    preview.style.display = "block";
+  };
+}
+
+function salvar() {
+  const link = document.createElement('a');
+  link.download = "reserva-aroeiras.png";
+  link.href = fotoFinal;
+  link.click();
+}
+
+function refazer() {
+  preview.style.display = "none";
+}
+</script>
+
+</body>
+</html>
