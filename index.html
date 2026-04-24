@@ -1,0 +1,78 @@
+<script>
+const video = document.getElementById('video');
+
+/* INICIAR CÂMERA */
+navigator.mediaDevices.getUserMedia({
+  video: {
+    facingMode: "environment"
+  }
+})
+.then(stream => {
+  video.srcObject = stream;
+})
+.catch(err => {
+  alert("Permita o acesso à câmera");
+});
+
+/* PRINT REALISTA DA TELA */
+function capturarTela() {
+  try {
+    // tamanho da tela visível
+    const larguraTela = window.innerWidth;
+    const alturaTela = window.innerHeight;
+
+    // AUMENTA QUALIDADE (2x ou 3x)
+    const escala = 2; // pode usar 3 para ultra HD
+
+    const canvas = document.createElement('canvas');
+    canvas.width = larguraTela * escala;
+    canvas.height = alturaTela * escala;
+
+    const ctx = canvas.getContext('2d');
+
+    // fundo preto (evita transparência)
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // DESENHA VÍDEO AJUSTADO À TELA
+    ctx.drawImage(
+      video,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    // CARREGA MOLDURA
+    const moldura = new Image();
+    moldura.src = "MOLDURA.png";
+
+    moldura.onload = () => {
+      // DESENHA MOLDURA POR CIMA
+      ctx.drawImage(
+        moldura,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      // GERA IMAGEM FINAL (QUALIDADE MÁXIMA)
+      const imagemFinal = canvas.toDataURL("image/png", 1.0);
+
+      // DOWNLOAD AUTOMÁTICO
+      const link = document.createElement('a');
+      link.download = "reserva-aroeiras.png";
+      link.href = imagemFinal;
+      link.click();
+    };
+
+    moldura.onerror = () => {
+      alert("Erro ao carregar a moldura. Verifique o nome MOLDURA.png");
+    };
+
+  } catch (erro) {
+    alert("Erro ao capturar imagem: " + erro.message);
+  }
+}
+</script>
